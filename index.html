@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Terpadu - Darul Abror IBS</title>
+    <title>Sistem Informasi Manajemen Administrasi Darul Abror</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -451,6 +451,8 @@
 </div>
 
             <div class="p-8">
+                <div id="monthly-update-banner" class="hidden mb-6 no-print"></div>
+
                 <div id="stats-grid" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 no-print"></div>
 
                 <div id="laporan-section" class="hidden space-y-8">
@@ -507,6 +509,10 @@
                                 <div class="flex justify-between border-b border-slate-100 pb-2">
                                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Versi</span>
                                     <span class="text-xs font-bold text-slate-700" id="app-version">1.0.0</span>
+                                </div>
+                                <div class="flex justify-between border-b border-slate-100 pb-2">
+                                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Terakhir Diperbarui</span>
+                                    <span class="text-xs font-bold text-sky-700" id="app-last-update">-</span>
                                 </div>
                                 <div class="flex justify-between border-b border-slate-100 pb-2">
                                     <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Jenis Lisensi</span>
@@ -788,6 +794,39 @@
             }
         };
 
+        // ------- "Pembaruan Bulanan" otomatis (tanggal 5 tiap bulan) -------
+        const BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+        function getLastMonthlyUpdateDate() {
+            const now = new Date();
+            const updateDate = now.getDate() >= 5
+                ? new Date(now.getFullYear(), now.getMonth(), 5)
+                : new Date(now.getFullYear(), now.getMonth() - 1, 5);
+            return `${updateDate.getDate()} ${BULAN_ID[updateDate.getMonth()]} ${updateDate.getFullYear()}`;
+        }
+
+        function showMonthlyUpdateBannerIfApplicable() {
+            const banner = document.getElementById('monthly-update-banner');
+            if (!banner) return;
+            if (new Date().getDate() !== 5) { banner.classList.add('hidden'); return; }
+
+            banner.classList.remove('hidden');
+            banner.innerHTML = `
+                <div class="flex items-center justify-between gap-4 bg-gradient-to-r from-sky-700 to-sky-600 text-white rounded-2xl px-6 py-4 shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-yellow-400/20 text-yellow-300 rounded-full p-2"><i data-lucide="sparkles" class="w-4 h-4"></i></span>
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-widest text-yellow-300">Pembaruan Bulanan</p>
+                            <p class="text-[11px] font-semibold text-white/90">Data & sistem telah diperbarui hari ini, ${getLastMonthlyUpdateDate()}.</p>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('monthly-update-banner').classList.add('hidden')" class="text-white/60 hover:text-white transition-all">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>`;
+            if (window.lucide) lucide.createIcons();
+        }
+
         // Satpam (Auth State Observer)
         auth.onAuthStateChanged((user) => {
             const loginPage = document.getElementById('login-page');
@@ -798,6 +837,7 @@
                 loginPage.classList.add('hidden');
                 mainApp.classList.remove('hidden');
                 initSync();
+                showMonthlyUpdateBannerIfApplicable();
             } else {
                 loginPage.classList.remove('hidden');
                 mainApp.classList.add('hidden');
@@ -1008,6 +1048,8 @@
             `).join('');
 
             document.getElementById('app-year').innerText = new Date().getFullYear();
+            const lastUpdateEl = document.getElementById('app-last-update');
+            if (lastUpdateEl) lastUpdateEl.innerText = getLastMonthlyUpdateDate();
             lucide.createIcons();
         };
 
